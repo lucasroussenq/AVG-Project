@@ -22,6 +22,10 @@ DHT dht(DHTPIN, DHTTYPE);
 #define IN3 14
 #define IN4 12
 
+// === Velocidade dos motores (0 a 255) ===
+int velocidadeEsquerda = 230; // Motor esquerdo
+int velocidadeDireita = 225;  // Motor direito (levemente mais forte)
+
 void setup() {
   Serial.begin(115200);
   Serial.println("Iniciando...");
@@ -47,22 +51,15 @@ void setup() {
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
 
-  ledcSetup(0, 5000, 8);
-  ledcSetup(1, 5000, 8);
+  ledcSetup(0, 5000, 8); // Canal motor esquerdo
+  ledcSetup(1, 5000, 8); // Canal motor direito
 
   ledcAttachPin(ENA, 0);
   ledcAttachPin(ENB, 1);
-
-  // === Anda para frente ===
-  andarFrente();
-  Serial.println("🚗 Andando pra frente por 15 segundos...");
-  delay(15000);
-
-  pararMotores();
-  Serial.println("🛑 Carrinho parado.");
 }
 
 void loop() {
+  // === Lê dados do DHT11 ===
   float temperatura = dht.readTemperature();
   float umidade = dht.readHumidity();
 
@@ -77,13 +74,14 @@ void loop() {
     Serial.print(umidade);
     Serial.println(" %");
 
+    // === Envia dados ao servidor ===
     if (WiFi.status() == WL_CONNECTED) {
       HTTPClient http;
       http.begin(serverName);
       http.addHeader("Content-Type", "application/json");
 
       String json = "{\"temperatura\":" + String(temperatura, 1) +
-              ",\"umidade\":" + String(umidade, 1) + "}";
+                    ",\"umidade\":" + String(umidade, 1) + "}";
 
       int httpResponseCode = http.POST(json);
 
@@ -102,18 +100,26 @@ void loop() {
     }
   }
 
-  delay(10000); // Faz a leitura e envio a cada 10 segundos
+  // === Anda por 15 segundos ===
+  Serial.println("🚗 Andando pra frente por 15 segundos...");
+  andarFrente();
+  delay(15000);
+
+  // === Para por 5 segundos ===
+  pararMotores();
+  Serial.println("🛑 Parado por 5 segundos...");
+  delay(5000);
 }
 
-// === Função para andar pra frente ===
+// === Função para andar pra frente com rotação invertida ===
 void andarFrente() {
-  digitalWrite(IN1, HIGH);
-  digitalWrite(IN2, LOW);
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
+  digitalWrite(IN1, LOW);   // Inverter sentido
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
 
-  ledcWrite(0, 255);
-  ledcWrite(1, 255);
+  ledcWrite(0, velocidadeEsquerda); 
+  ledcWrite(1, velocidadeDireita);
 }
 
 // === Função para parar os motores ===
