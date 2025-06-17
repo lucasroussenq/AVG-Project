@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Monitor de Temperatura e Umidade</title>
+    <style>
+        body { font-family: Arial; background: #f4f4f4; text-align: center; }
+        h1 { color: #333; }
+        .card {
+            background: white;
+            padding: 20px;
+            margin: 20px auto;
+            width: 400px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        ul { list-style: none; padding: 0; }
+        li { padding: 5px; border-bottom: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1> Monitor de <br> Temperatura e Umidade</h1>
+        <p>Sistema: <b style="color: green;">Online</b></p>
+
+        <h3> Log de Leituras</h3>
+        <ul id="log">
+            {% for dado in dados %}
+            <li>🌡️ {{dado.temperatura}}°C | 💧 {{dado.umidade}}% - {{dado.hora}}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <script>
+        setInterval(() => {
+            fetch('/api/dados')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('temp').innerText = data.temperatura;
+                document.getElementById('umid').innerText = data.umidade;
+
+                const log = document.getElementById('log');
+                const item = document.createElement('li');
+                item.innerText = 🌡️ ${data.temperatura}°C | 💧 ${data.umidade}% - ${data.hora};
+                log.prepend(item);
+            });
+        }, 5000);
+    </script>
+</body>
+</html>
